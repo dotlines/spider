@@ -19,9 +19,9 @@ class CSDNSpider(scrapy.Spider):
 			item['link'] = sel.xpath('span/a/@href').extract()
 			item['reading_num'] = sel.xpath('ul/li[@class=\'read_num\']/em/text()').extract()
 			item['date'] = sel.xpath('ul/li[2]/text()').extract()
-			# yield item
+			yield item
 		# with open('E:\\news.txt','w') as f:
 			# for i in item:
 			# 	f.write(i)
-		print(item['title'])
+		# print(item['title'])
 	
