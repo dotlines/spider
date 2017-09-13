@@ -21,7 +21,6 @@ class CSDNSpider(scrapy.Spider):
 			item['date'] = sel.xpath('ul/li[2]/text()').extract()
 			yield item
 		# with open('E:\\news.txt','w') as f:
-			# for i in item:
-			# 	f.write(i)
+		# 	for i in item:
+		# 		f.write(i+'\n')
 		# print(item['title'])
-	

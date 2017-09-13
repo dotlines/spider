@@ -6,7 +6,9 @@
 # http://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
-
+from selenium import webdriver
+from scrapy.http import HtmlResponse
+import time
 
 class ScrapyTtSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
@@ -54,3 +56,20 @@ class ScrapyTtSpiderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+class JDScriptMiddleware(object):
+    def process_request(self,request,spider):
+        if spider.name == 'jd':
+            print('PhantomJS is starting...')
+            driver = webdriver.PhantomJS()
+            driver.get(request.url)
+            time.sleep(1)
+            js = 'var q=document.documentElement.scrollTop=1000'
+            driver.execute_script(js)
+            time.sleep(3)
+            body = driver.page_source
+            print('访问' + request.url)
+            return HtmlResponse(driver.current_url,body=body,encoding='utf-8',request=request)
+        else:
+            return
+
+

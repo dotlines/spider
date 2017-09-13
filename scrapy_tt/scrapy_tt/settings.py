@@ -19,7 +19,7 @@ FEED_EXPORT_ENCODING = 'utf-8'
 #USER_AGENT = 'scrapy_tt (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -46,9 +46,10 @@ ROBOTSTXT_OBEY = True
 
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
-#SPIDER_MIDDLEWARES = {
-#    'scrapy_tt.middlewares.ScrapyTtSpiderMiddleware': 543,
-#}
+SPIDER_MIDDLEWARES = {
+   # 'scrapy_tt.middlewares.ScrapyTtSpiderMiddleware': 543,
+    'scrapy_tt.middlewares.JDScriptMiddleware':100,
+}
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
