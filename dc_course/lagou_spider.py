@@ -19,8 +19,8 @@ connection = MongoClient()
 db = connection.lagou_db
 #数据入库
 def save_to_db(response,collection):
-    colletcion = db.jobs
-    colletcion.insert(response)
+    jobs = collection
+    db.jobs.insert(response)
 
 
 #抓取多页职位
@@ -38,6 +38,16 @@ def get_pages_data(page):
         # print(random_ua)
         save_to_db(response,'jobs')
         print('第%s页数据存储完毕！' % str(i + 1))
+def get_position_detail(position_url,db):
+    pass
 
+count = 0
+collection = db.jobs
+back = collection.find({},{'positionId':1,'_id':0})
+for item in back:
+    print('https://www.lagou.com/jobs/%s.html'%str(item['positionId']))
+    count += 1
+print(count)
 if __name__ == '__main__':
-    get_pages_data(3)
+    # get_pages_data(3)
+    pass
