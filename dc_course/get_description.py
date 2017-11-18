@@ -16,7 +16,7 @@ ua = UserAgent()
 connection = MongoClient()
 db = connection.lagou_db
 collection = db.jobs
-back = collection.find({}, {'positionId':1,'positionName':'1','_id':0})
+back = collection.find({}, {'positionId':1,'positionName':1,'_id':0})
 # proxies = { "http": "http://10.10.1.10:3128", "https": "http://10.10.1.10:1080", }
 def get_position_detail(position_url):
     random_ua = ua.random
