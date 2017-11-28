@@ -71,8 +71,7 @@ url_list = ["https://www.amazon.com/Best-Sellers-Electronics/zgbs/electronics/re
 "https://www.amazon.com/Best-Sellers-Electronics-Security-Surveillance-Equipment/zgbs/electronics/524136/ref=zg_bs_nav_e_1_e",
 "https://www.amazon.com/Best-Sellers-Electronics-Video-Game-Consoles-Accessories/zgbs/electronics/7926841011/ref=zg_bs_nav_e_1_e",
 "https://www.amazon.com/Best-Sellers-Electronics-Wearable-Technology/zgbs/electronics/10048700011/ref=zg_bs_nav_e_1_e",
-"https://www.amazon.com/Best-Sellers-Womens-Handbags-Purses/zgbs/fashion/15743631/ref=zg_bs_nav_2_7147440011"
-            ]
+"https://www.amazon.com/Best-Sellers-Womens-Handbags-Purses/zgbs/fashion/15743631/ref=zg_bs_nav_2_7147440011"]
 count = 0
 start_time = time.time()
 for main_url in url_list:
