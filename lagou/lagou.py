@@ -111,15 +111,17 @@ class Lagou(object):
                 'havemark': 0,
                 'sortField': 0
             }
-
-            company_res = self.request_url(requests.post,city_url+'.json',cl_headers,data=pyload)
-            company = json.loads(company_res.text)
+            company = {}
             company['uid'] = city_url + '.json?pageNo=%s' % str(pn)  # 添加一个id用于去重
             # 判断城市翻页是否重复
             if Lagou._company_col.find({'uid': company['uid']}).count() != 0:
                 print('此页面已抓取')
                 pn += 1
                 continue
+
+            company_res = self.request_url(requests.post,city_url+'.json',cl_headers,data=pyload)
+            company_data = json.loads(company_res.text)
+            company = {**company,**company_data}
 
             try:
                 if not company['result']: #终止条件
@@ -169,9 +171,9 @@ class Lagou(object):
 
 
 if __name__ == '__main__':
-    lg = Lagou('深圳')
-    # lg.get_company_list()
-    lg.all_city_company()
+    lg = Lagou('重庆')
+    lg.get_company_list()
+    # lg.all_city_company()
 
 
 
