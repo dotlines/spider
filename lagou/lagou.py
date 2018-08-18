@@ -32,13 +32,13 @@ class Lagou(object):
         'Origin': 'https://www.lagou.com'
     }
 
-    # 连接数据库
+    # 连接数据库，数据库全部为protected
     _myclient = pymongo.MongoClient('localhost', 27017)
     _mydb = _myclient['lagoudb']
-    _url_col = _mydb['status_url']
-    _company_col = _mydb['company_list']
-    _city_col = _mydb['cities']
-
+    _url_col = _mydb['status_url']  #被成功请求过的url集合
+    _company_col = _mydb['company_list']#所有公司的集合
+    _city_col = _mydb['cities']#所有城市的集合
+    _posit_list = _mydb['position_list']#公司列表的岗位集合
     _retry_times = 5       #用于重试的次数
     #按城市进行抓取
     def __init__(self,city):
@@ -78,7 +78,7 @@ class Lagou(object):
 
         return 'cities saved!'
 
-    #获取指定城市的所有公司
+    #获取指定城市的所有公司，返回状态码
     def get_company_list(self):
         #查找城市url
         city_col = Lagou._mydb.cities
@@ -93,18 +93,6 @@ class Lagou(object):
         cl_headers = Lagou.headers
         cl_headers['Referer'] = city_url
         cl_headers['User-Agent'] = Lagou.ua.random
-        # cl_headers2 = {
-        #     'User-Agent': self.ua.random,
-        #     'Referer': city_url,  # url without '.json'
-        #     'Cookie': 'JSESSIONID=ABAAABAAAFCAAEGBBB4142F20938248BB2478F3E58144AC; Hm_lvt_4233e74dff0ae5bd0a3d81c6ccf756e6=1533828435; _ga=GA1.2.270700076.1533828435; user_trace_token=20180809232715-b1c8888a-9be8-11e8-b9f2-525400f775ce; LGUID=20180809232715-b1c88c33-9be8-11e8-b9f2-525400f775ce; X_HTTP_TOKEN=3086fbe35a0d1fd40e7578a16f535b8b; _putrc=6F2F4FED79124B7A; login=true; unick=%E6%8B%89%E5%8B%BE%E7%94%A8%E6%88%B73070; showExpriedIndex=1; showExpriedCompanyHome=1; showExpriedMyPublish=1; hasDeliver=0; index_location_city=%E5%B9%BF%E5%B7%9E; TG-TRACK-CODE=index_search; _gid=GA1.2.105723379.1533990288; _gat=1; LGSID=20180811202447-89784d70-9d61-11e8-ba8e-525400f775ce; PRE_UTM=; PRE_HOST=; PRE_SITE=; PRE_LAND=https%3A%2F%2Fwww.lagou.com%2Fgongsi%2F2-0-0; gate_login_token=a11927046bd1035997e3d742392a2df46399e358fdcdf349; LGRID=20180811202449-8a37bc8c-9d61-11e8-ba8e-525400f775ce; Hm_lpvt_4233e74dff0ae5bd0a3d81c6ccf756e6=1533990289',
-        #     'Accept': 'application/json, text/javascript, */*; q=0.01',
-        #     'Accept-Encoding': 'gzip, deflate, br',
-        #     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7',
-        #     'Connection': 'keep-alive',
-        #     'Content-Length': '39',
-        #     'Host': 'www.lagou.com',
-        #     'Origin': 'https://www.lagou.com',
-        # }
         pn = 1
         while True:
             pyload = {
@@ -187,23 +175,115 @@ class Lagou(object):
     def company_profile(self,company):
         pass
 
-    def get_position_list(self,company):
-        pass
+    # 从数据库获取所有公司的id和公司名
+    def get_all_company_id(self):
+        com_data = self._company_col.find()
+        id_set = set()
+        company_list = []
+        for city in com_data:
+            for company_result in city['result']:
+                company_list.append({'companyId':company_result['companyId'],'companyName':company_result['companyShortName']})
+        #公司去重，将list中的dict转化为set，可被hash，然后通过set去重，再添加进新的list
+        uni_company_list = []
+        for company in company_list:
+            t = tuple(company.items())
+            if t not in id_set:
+                id_set.add(t)
+                uni_company_list.append(company)
+        return uni_company_list
 
-    def posititon_detail(self,position):
-        pass
+    #获取某公司的所有岗位列表并存入数据库,返回岗位数量
+    def get_position_list(self,company_id,company_name):
+        pn = 1
+        position_list = []
+        position_num = 0
+        #公司去重
+        if self._posit_list.find({'companyId':company_id}).count() != 0:
+            print('%s 已抓取过'%company_name)
+            return None
 
+        position_url = 'https://www.lagou.com/gongsi/searchPosition.json'
+        position_headers = {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'Referer': 'https://www.lagou.com/gongsi/j%d.html'%company_id,
+            'User-Agent':Lagou.ua.random,
+            'cookie': "_ga=GA1.2.114206061.1534349928; user_trace_token=20180816001847-e38dd0ee-a0a6-11e8-a80e-5254005c3644; LGUID=20180816001847-e38dd425-a0a6-11e8-a80e-5254005c3644; index_location_city=%E5%85%A8%E5%9B%BD; JSESSIONID=ABAAABAAAFCAAEG6FF3CE1C8E47BAB7CCCDB33075D30323; _gid=GA1.2.1677924342.1534584164; Hm_lvt_4233e74dff0ae5bd0a3d81c6ccf756e6=1534349928,1534584164; SEARCH_ID=fceafb3b625d49168771da7d9d5550d1; TG-TRACK-CODE=hpage_code; LGRID=20180818191151-81f97c1b-a2d7-11e8-923c-525400f775ce; Hm_lpvt_4233e74dff0ae5bd0a3d81c6ccf756e6=1534590712",
+            'connection': "keep-alive"
+        }
+        while True:
+            pyload = {
+                 'companyId':company_id,
+                 'positionFirstType':'全部',
+                 'pageNo':pn
+            }
+            position_res = self.request_url(requests.post, position_url, headers=position_headers, data=pyload)
+            try:#处理反爬返回结果非json的情况
+                position_data = json.loads(position_res.text)
+            except Exception as e:#异常类型写错则无法捕获
+                print('anti-spider[no json]:',e)
+                print('爬虫被识别，第{}次重试'.format(Lagou._retry_times-self._retry_times+1))
+                self._retry_times -= 1
+                if self._retry_times <= 0:
+                    print('%s 公司抓取失败'%company_name)
+                    return None
+                sleep(random.uniform(0,10))
+                return self.get_position_list(company_id,company_name)#重试
+
+            try:  # 反爬返回结果为json，但无result的json的情况
+                if not position_data['content']['data']['page']['result']:  # 终止条件
+                    print('{0} 公司岗位抓取完毕'.format(company_name))
+                    break
+            except (KeyError,TypeError) as e:
+                print('anti-spider[wrong json format]:', e)
+                continue
+            position_list.append(position_data)
+            position_num += len(position_data['content']['data']['page']['result'])  # 累计岗位数量
+            print('{0} 第 {1} 页岗位抓取完毕'.format(company_name, pn))
+            # self._posit_list.insert(dict({'companyId': company_id}, **position_data))
+            pn += 1
+            # sleep(random.uniform(0,1))
+
+        self._posit_list.insert(dict({'companyId':company_id,'companyUrl':'https://www.lagou.com/gongsi/j%d.html'%company_id},**{'allContent':position_list})) #所有岗位列表都取到才存入数据库
+        print('%s 完成 %d 个岗位获取，并存入数据库'%(company_name,position_num))
+
+    #用于外部访问数据库
+    def get_col_data(self,collection,myquery):
+        mycol = self._mydb[collection]
+        data = mycol.find(myquery)
+        return  data
     #更新数据使用update 示例
     # col = mydb['company_list']
     # url = 'https://www.lagou.com/gongsi/215-0-0.json?pageNo='
     # for i in col.find():
     #     col.update({'_id': i['_id']}, {'$set': {'uid': url + str(i['pageNo'])}})
 
+    #获取岗位的详情并存入数据库
+    def posititon_detail(self,position):
+        pass
+
+    #获取所有公司岗位列表
+    def all_posit_list(self):
+        company_list = self.get_all_company_id()
+        company_num = len(company_list)
+        count = 1
+        for company in company_list:
+            company_id = company['companyId']
+            company_name = company['companyName']
+            print('开始获取%s 岗位信息...'%company_name)
+            start_time = time()
+            self.get_position_list(company_id,company_name)
+            # print(company_id,company_name)
+            end_time = time()
+            print('总共{0}个公司，完成第{1}个，剩余{2}个，耗时{3:.2f}秒'.format(company_num,count,company_num-count,end_time-start_time))
+            print('------------------------------')
+            count += 1
+            sleep(random.uniform(0,0.5))
+        print('完成所有公司的岗位获取！')
 
 if __name__ == '__main__':
     lg = Lagou('重庆')
-    # lg.get_company_list()
-    lg.all_city_company()
+    lg.all_posit_list()
+    # company_list = lg.get_all_company_id()
 
 
 
