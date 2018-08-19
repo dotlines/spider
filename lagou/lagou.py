@@ -225,6 +225,7 @@ class Lagou(object):
                 self._retry_times -= 1
                 if self._retry_times <= 0:
                     print('%s 公司抓取失败'%company_name)
+                    self._retry_times = Lagou._retry_times
                     return None
                 sleep(random.uniform(0,10))
                 return self.get_position_list(company_id,company_name)#重试
@@ -264,11 +265,18 @@ class Lagou(object):
     #获取所有公司岗位列表
     def all_posit_list(self):
         company_list = self.get_all_company_id()
+        already_company_id = []
+        for already_company in list(self._posit_list.find()):
+            already_company_id.append(already_company['companyId'])
         company_num = len(company_list)
         count = 1
         for company in company_list:
             company_id = company['companyId']
             company_name = company['companyName']
+            if company_id in already_company_id:#重启时，检测最后的状态
+                print('%s已经获取'%company_name)
+                count += 1
+                continue
             print('开始获取%s 岗位信息...'%company_name)
             start_time = time()
             self.get_position_list(company_id,company_name)
@@ -279,6 +287,9 @@ class Lagou(object):
             count += 1
             sleep(random.uniform(0,0.5))
         print('完成所有公司的岗位获取！')
+
+    def main(self):
+        pass
 
 if __name__ == '__main__':
     lg = Lagou('重庆')
