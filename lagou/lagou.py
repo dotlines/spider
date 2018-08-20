@@ -98,7 +98,8 @@ class Lagou(object):
         url = 'https://www.lagou.com/gongsi/allCity.html?option=215-0-0'
         #去重判断
         if self.is_repeat_url(url):
-            return '已获取所有城市列表'
+            print('已获取所有城市列表')
+            return None
         #请求城市列表
         city_headers = Lagou.headers
         city_res = self.request_url(requests.get,url,city_headers)
@@ -108,8 +109,8 @@ class Lagou(object):
         #数据入库
         for city in city_lists:
             Lagou._city_col.insert({'city_name':city.xpath('string(.)'),'city_url':city.xpath('string(./@href)')})
-
-        return 'cities saved!'
+        print('all cities saved!')
+        return None
 
     #获取指定城市的所有公司，返回状态码
     def get_company_list(self):
@@ -204,9 +205,6 @@ class Lagou(object):
         print('完成所有城市的获取！！')
 
 
-
-    def company_profile(self,company):
-        pass
 
     # 从数据库获取所有公司的id和公司名
     def get_all_company_id(self):
@@ -359,12 +357,13 @@ class Lagou(object):
 
     # 打包拉勾爬虫：所有城市-所有企业-所有岗位
     def main(self):
-        pass
+        self.all_posit_list()
+        self.data_to_csv()
 
 if __name__ == '__main__':
     lg = Lagou()
-    lg.data_to_csv()
-    # company_list = lg.get_all_company_id()
+    lg.main()
+
 
 
 
