@@ -5,15 +5,48 @@
  @software: PyCharm on 18-8-12
 """
 import requests
-from requests.adapters import HTTPAdapter
 from lxml import etree
-import io
 import json
 from fake_useragent import UserAgent
 import pymongo
-from time import sleep
+from time import sleep,time
 import random
-from time import time
+import pandas as pd
+from enum import Enum
+
+#定义字段枚举类，用于设定目标抓取的字段
+class Field(Enum):
+    companyId = '公司ID'
+    positionId = '岗位ID'
+    jobNature = '工作性质'
+    financeStage = '发展阶段'
+    companyName = '公司简称'
+    companyFullName = '公司全称'
+    companySize = '公司规模'
+    industryField = '领域'
+    positionName = '岗位名称'
+    city = '工作城市'
+    createTime = '发布时间'
+    salary = '工资'
+    workYear = '工作年限'
+    education = '教育水平'
+    positionAdvantage = '职位诱惑'
+    companyLabelList = '公司标签'
+    userId = '用户ID'
+    companyLogo = '公司logo'
+    haveDeliver = ''
+    score = ''
+    adWord = ''
+    adTimes = ''
+    adBeforeDetailPV = ''
+    adAfterDetailPV = ''
+    adBeforeReceivedCount = ''
+    adAfterReceivedCount = ''
+    isCalcScore = ''
+    searchScore = ''
+    district = '城区'
+    positionUrl = '岗位链接'
+    companyUrl = '公司链接'
 
 class Lagou(object):
     # 构建通用请求头
@@ -41,8 +74,8 @@ class Lagou(object):
     _posit_list = _mydb['position_list']#公司列表的岗位集合
     _retry_times = 5       #用于重试的次数
     #按城市进行抓取
-    def __init__(self,city):
-        self.city = city        #未校验城市名
+    def __init__(self,city='厦门'):
+        self.city = city        #未校验城市名，默认为厦门
 
 
     def request_url(self,method,url,headers,**args):
@@ -247,11 +280,6 @@ class Lagou(object):
         self._posit_list.insert(dict({'companyId':company_id,'companyUrl':'https://www.lagou.com/gongsi/j%d.html'%company_id},**{'allContent':position_list})) #所有岗位列表都取到才存入数据库
         print('%s 完成 %d 个岗位获取，并存入数据库'%(company_name,position_num))
 
-    #用于外部访问数据库
-    def get_col_data(self,collection,myquery):
-        mycol = self._mydb[collection]
-        data = mycol.find(myquery)
-        return  data
     #更新数据使用update 示例
     # col = mydb['company_list']
     # url = 'https://www.lagou.com/gongsi/215-0-0.json?pageNo='
@@ -288,12 +316,54 @@ class Lagou(object):
             sleep(random.uniform(0,0.5))
         print('完成所有公司的岗位获取！')
 
+    #将制定格式保存为csv
+    def data_to_csv(self):
+        posit_cursor = self._posit_list.find()
+        posit_count = 0
+        company_count = 0
+        position_list = []
+        posit_field = [Field.positionName, Field.companyName, Field.companyFullName, Field.positionUrl,
+                       Field.companyUrl, Field.jobNature, Field.financeStage, Field.companySize, Field.industryField,
+                       Field.city, Field.district, Field.createTime, Field.salary, Field.workYear, Field.education,
+                       Field.positionAdvantage, Field.companyLabelList, Field.companyLogo]
+
+        start_time = time()
+        for results in posit_cursor:
+            for data in results['allContent']:
+                positions = data['content']['data']['page']['result']
+                for posit in positions:
+                    posit_data = {}
+                    for field in posit_field:
+                        if field.name == 'positionUrl':
+                            posit_data[field.value] = 'https://www.lagou.com/jobs/%d.html' % posit[
+                                Field.positionId.name]
+                            continue
+                        if field.name == 'companyUrl':
+                            posit_data[field.value] = 'https://www.lagou.com/gongsi/%d.html' % posit[
+                                Field.companyId.name]
+                            continue
+                        if field.name == 'district':
+                            if 'district' not in posit.keys():
+                                posit_data[field.value] = ''
+                                continue
+                        posit_data[field.value] = posit[field.name]
+                    # print(posit_data)
+                    posit_count += 1
+                    position_list.append(posit_data)
+            company_count += 1
+        df = pd.DataFrame(position_list, columns=[field.value for field in posit_field])
+        df.to_csv('lagou_data.csv', encoding='utf-8')
+        end_time = time()
+        print('共输出 %d 个公司，%d 个岗位，共耗时%.2f秒' % (company_count, posit_count, (end_time - start_time)))
+
+
+    # 打包拉勾爬虫：所有城市-所有企业-所有岗位
     def main(self):
         pass
 
 if __name__ == '__main__':
-    lg = Lagou('重庆')
-    lg.all_posit_list()
+    lg = Lagou()
+    lg.data_to_csv()
     # company_list = lg.get_all_company_id()
 
 
