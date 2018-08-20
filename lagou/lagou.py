@@ -316,13 +316,18 @@ class Lagou(object):
 
     #删除数据库中重复保存的岗位/公司
     def del_repeat_data(self):
-        company_list = self._posit_list.find()
+        company_list = Lagou._posit_list.find()
         com_id_set = set()
         for company in company_list:
           if company['companyId'] not in com_id_set:
               com_id_set.add(company['companyId'])
           else:
               col.delete_one(company)
+        posit_sum = 0
+        for company in Lagou._posit_list.find():
+	         for content in company['allContent']:
+		          posit_sum += len(content['content']['data']['page']['result'])
+        print('完成数据去重，最终保留 %d 个公司，%d 个岗位'%(len(com_id_set),posit_sum)
 
     #将制定格式保存为csv
     def data_to_csv(self):
