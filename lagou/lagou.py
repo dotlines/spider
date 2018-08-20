@@ -314,6 +314,16 @@ class Lagou(object):
             sleep(random.uniform(0,0.5))
         print('完成所有公司的岗位获取！')
 
+
+    def del_repeat_company(self):
+        company_list = self._posit_list.find()
+        com_id_set = set()
+        for company in company_list:
+          if company['companyId'] not in com_id_set:
+              com_id_set.add(company['companyId'])
+          else:
+              col.delete_one(company)
+
     #将制定格式保存为csv
     def data_to_csv(self):
         posit_cursor = self._posit_list.find()
@@ -358,6 +368,7 @@ class Lagou(object):
     # 打包拉勾爬虫：所有城市-所有企业-所有岗位
     def main(self):
         self.all_posit_list()
+        self.del_repeat_company()
         self.data_to_csv()
 
 if __name__ == '__main__':
