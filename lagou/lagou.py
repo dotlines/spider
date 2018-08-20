@@ -314,8 +314,8 @@ class Lagou(object):
             sleep(random.uniform(0,0.5))
         print('完成所有公司的岗位获取！')
 
-
-    def del_repeat_company(self):
+    #删除数据库中重复保存的岗位/公司
+    def del_repeat_data(self):
         company_list = self._posit_list.find()
         com_id_set = set()
         for company in company_list:
@@ -368,7 +368,7 @@ class Lagou(object):
     # 打包拉勾爬虫：所有城市-所有企业-所有岗位
     def main(self):
         self.all_posit_list()
-        self.del_repeat_company()
+        self.del_repeat_data()
         self.data_to_csv()
 
 if __name__ == '__main__':
